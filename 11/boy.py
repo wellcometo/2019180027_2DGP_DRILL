@@ -1,13 +1,14 @@
 from pico2d import *
 
 # 이벤트 정의 RIGHT_UP, _DOWN, LEFT_UP, _DOWN
-RD, LD, RU, LU, TIMER = range(5)  # RD, LD, RU, LU, TIMER = 0, 1, 2, 3, 4
+RD, LD, RU, LU, TIMER, AD = range(6)  # RD, LD, RU, LU, TIMER, AD = 0, 1, 2, 3, 4, 5
 
 key_event_table = {
     (SDL_KEYDOWN, SDLK_RIGHT): RD,
     (SDL_KEYDOWN, SDLK_LEFT): LD,
     (SDL_KEYUP, SDLK_RIGHT): RU,
     (SDL_KEYUP, SDLK_LEFT): LU,
+    (SDL_KEYDOWN, SDLK_a): AD
 }
 
 
@@ -48,13 +49,13 @@ class RUN:
 
         # 어떤 이벤트 때문에, RUN 으로 들아왔는지 파악을 하고, 그 이벤트에 따라서 실제 방향을 결정.
         if event == RD:
-            self.dir += 1
+            self.dir = 1
         elif event == LD:
-            self.dir -= 1
+            self.dir = -1
         elif event == RU:
-            self.dir -= 1
+            self.dir = -1
         elif event == LU:
-            self.dir += 1
+            self.dir = 1
         pass
 
     def exit(self):
@@ -108,12 +109,50 @@ class SLEEP:
         pass
 
 
+class AUTO_RUN:
+    def enter(self, event):
+        print('ENTER AUTO_RUN')
+        pass
+
+    def exit(self):
+        print('EXIT AUTO_RUN')
+        # 런 상태를 나갈 때, 현재 방향을 저장해놓음.
+        self.face_dir = self.dir
+        pass
+
+    def do(self):
+        # 달리게 만들어 준다.
+        self.frame = (self.frame + 1) % 8
+        if self.dir == -1 or (self.dir == 0 and self.face_dir == -1):
+            self.dir = -1
+            self.x -= 1
+        if self.dir == 1 or (self.dir == 0 and self.face_dir == 1):
+            self.dir = 1
+            self.x += 1
+        if self.x < 0:
+            self.x = 0
+            self.dir = 1
+        if self.x > 800:
+            self.x = 800
+            self.dir = -1
+        # self.x = clamp(0, self.x, 800)
+        pass
+
+    def draw(self):
+        if self.dir == -1:
+            self.image.clip_draw(self.frame*100, 0, 100, 100, self.x, self.y+25, 200, 200)
+        elif self.dir == 1:
+            self.image.clip_draw(self.frame*100, 100, 100, 100, self.x, self.y+25, 200, 200)
+        pass
+
+
 # 상태 변환
 
 next_state = {
-    SLEEP: {RU: RUN,LU: RUN, RD: RUN, LD: RUN, TIMER: SLEEP},
-    IDLE: {RU: RUN, LU: RUN, RD: RUN, LD: RUN, TIMER: SLEEP},
-    RUN: {RU: IDLE, LU: IDLE, RD: IDLE, LD: IDLE, TIMER: RUN}
+    AUTO_RUN: {RU: AUTO_RUN, LU: AUTO_RUN, RD: RUN, LD: RUN, TIMER: AUTO_RUN, AD: IDLE},
+    SLEEP: {RU: RUN, LU: RUN, RD: RUN, LD: RUN, TIMER: SLEEP, AD: AUTO_RUN},
+    IDLE: {RU: RUN, LU: RUN, RD: RUN, LD: RUN, TIMER: SLEEP, AD: AUTO_RUN},
+    RUN: {RU: IDLE, LU: IDLE, RD: IDLE, LD: IDLE, TIMER: RUN, AD: AUTO_RUN}
 }
 
 
