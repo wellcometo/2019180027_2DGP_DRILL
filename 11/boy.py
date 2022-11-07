@@ -130,11 +130,11 @@ class AUTO_RUN:
             self.dir = 1
             self.x += 1
         if self.x < 0:
-            self.x = 0
             self.dir = 1
+            self.x = 0
         if self.x > 800:
-            self.x = 800
             self.dir = -1
+            self.x = 800
         # self.x = clamp(0, self.x, 800)
         pass
 
